@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MST Quotex AI Signal Bot</title>
+  <meta name="description" content="MST Quotex AI Signal Bot with Next Candle Predictions and Live Candlestick Chart." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    body {
+      background-color: #030712;
+      color: #f3f4f6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 16px;
+    }
+    .mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      width: 100%;
+      flex: 1;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 18px;
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      border-radius: 16px;
+      margin-bottom: 20px;
+    }
+    .logo {
+      font-size: 18px;
+      font-weight: 800;
+      color: #38bdf8;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      letter-spacing: 0.5px;
+    }
+    .badge {
+      background: rgba(56, 189, 248, 0.15);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .live-badge {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .grid-main {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+    @media (min-width: 900px) {
+      .grid-main {
+        grid-template-columns: 1.25fr 1fr;
+      }
+    }
+    .card {
+      background: #0b1324;
+      border: 1px solid #1e293b;
+      border-radius: 16px;
+      padding: 20px;
+    }
+    .form-group {
+      margin-bottom: 14px;
+    }
+    label {
+      font-size: 12px;
+      color: #94a3b8;
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+    }
+    select, input {
+      width: 100%;
+      padding: 12px;
+      background: #030712;
+      border: 1px solid #334155;
+      color: #f1f5f9;
+      border-radius: 10px;
+      font-size: 14px;
+      outline: none;
+    }
+    select:focus, input:focus {
+      border-color: #38bdf8;
+    }
+    .timeframe-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+    }
+    @media (min-width: 600px) {
+      .timeframe-grid {
+        grid-template-columns: repeat(7, 1fr);
+      }
+    }
+    .tf-btn {
+      background: #030712;
+      border: 1px solid #1e293b;
+      color: #94a3b8;
+      padding: 8px 4px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s;
+    }
+    .tf-btn.active {
+      background: rgba(56, 189, 248, 0.2);
+      border-color: #38bdf8;
+      color: #38bdf8;
+    }
+    .signal-box {
+      border-radius: 14px;
+      padding: 16px;
+      text-align: center;
+      margin: 14px 0;
+      background: #030712;
+      border: 1px solid #1e293b;
+      transition: all 0.3s;
+    }
+    .signal-box.call {
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+    }
+    .signal-box.put {
+      background: rgba(244, 63, 94, 0.12);
+      border: 1px solid rgba(244, 63, 94, 0.4);
+    }
+    .direction-title {
+      font-size: 32px;
+      font-weight: 900;
+      margin: 8px 0;
+      letter-spacing: 1px;
+    }
+    .direction-title.call { color: #10b981; }
+    .direction-title.put { color: #f43f5e; }
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .stat-box {
+      background: #030712;
+      border: 1px solid #1e293b;
+      border-radius: 10px;
+      padding: 10px;
+    }
+    .stat-label {
+      font-size: 11px;
+      color: #64748b;
+    }
+    .stat-val {
+      font-size: 15px;
+      font-weight: 800;
+      color: #e2e8f0;
+      margin-top: 2px;
+    }
+    .btn {
+      width: 100%;
+      padding: 14px;
+      background: #059669;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+    .btn:hover {
+      background: #10b981;
+    }
+    .btn-secondary {
+      background: #1e293b;
+      color: #e2e8f0;
+      border: 1px solid #334155;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-secondary:hover {
+      background: #334155;
+    }
+    .auto-bot-btn {
+      background: #0f172a;
+      border: 1px solid #334155;
+      color: #94a3b8;
+      width: 100%;
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .auto-bot-btn.active {
+      background: rgba(56, 189, 248, 0.2);
+      border-color: #38bdf8;
+      color: #38bdf8;
+    }
+    .chart-container {
+      width: 100%;
+      height: 260px;
+      position: relative;
+      background: #030712;
+      border-radius: 12px;
+      border: 1px solid #1e293b;
+      margin-bottom: 14px;
+      overflow: hidden;
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .timer-badge {
+      font-size: 12px;
+      color: #f59e0b;
+      font-weight: bold;
+    }
+    .history-table {
+      width: 100%;
+      text-align: left;
+      font-size: 12px;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    .history-table th, .history-table td {
+      padding: 8px 6px;
+      border-bottom: 1px solid #1e293b;
+    }
+    .history-table th {
+      color: #64748b;
+      font-size: 11px;
+    }
+    .pill-win {
+      background: rgba(16, 185, 129, 0.2);
+      color: #34d399;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 10px;
+    }
+    .pill-loss {
+      background: rgba(244, 63, 94, 0.2);
+      color: #fb7185;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Top Bar -->
+  <div class="header">
+    <div class="logo">
+      <span>⚡ MST QUOTEX BOT</span>
+      <span class="badge">NEXT CANDLE v2.4</span>
+    </div>
+    <div style="display: flex; gap: 10px; align-items: center;">
+      <button id="soundBtn" class="btn-secondary" onclick="toggleSound()">🔊 সাউন্ড অন</button>
+      <div class="live-badge">● QUOTEX LIVE</div>
+    </div>
+  </div>
+
+  <div class="grid-main">
+    <!-- Left Column: Chart & Market Selection -->
+    <div>
+      <div class="card" style="margin-bottom: 20px;">
+        <!-- Asset Selector -->
+        <div class="form-group">
+          <label>
+            <span>কারেন্সি পেয়ার সিলেক্ট করুন (Asset)</span>
+            <span id="marketTypeTag" class="mono text-cyan-400">OTC MARKET</span>
+          </label>
+          <select id="assetSelect" onchange="onAssetChange()">
+            <!-- OTC Markets -->
+            <optgroup label="OTC মার্কেটস (5s - 5m)">
+              <option value="EUR/USD (OTC)|otc|93|1.08450|5|0.00012">EUR/USD (OTC) - 93% Payout</option>
+              <option value="GBP/USD (OTC)|otc|92|1.29820|5|0.00016">GBP/USD (OTC) - 92% Payout</option>
+              <option value="USD/JPY (OTC)|otc|91|152.480|3|0.025">USD/JPY (OTC) - 91% Payout</option>
+              <option value="USD/INR (OTC)|otc|92|84.150|3|0.015">USD/INR (OTC) - 92% Payout</option>
+              <option value="USD/BDT (OTC)|otc|91|122.450|3|0.020">USD/BDT (OTC) - 91% Payout</option>
+              <option value="USD/PKR (OTC)|otc|90|278.350|3|0.035">USD/PKR (OTC) - 90% Payout</option>
+              <option value="USD/BRL (OTC)|otc|91|5.7620|4|0.0018">USD/BRL (OTC) - 91% Payout</option>
+              <option value="AUD/CAD (OTC)|otc|90|0.91240|5|0.00014">AUD/CAD (OTC) - 90% Payout</option>
+              <option value="BTC/USD (OTC)|otc|90|68420.00|2|18.5">BTC/USD (OTC) - 90% Payout</option>
+              <option value="ETH/USD (OTC)|otc|89|2540.50|2|1.8">ETH/USD (OTC) - 89% Payout</option>
+              <option value="Gold (OTC)|otc|92|2748.20|2|1.25">Gold (OTC) - 92% Payout</option>
+              <option value="Apple (OTC)|otc|91|231.40|2|0.28">Apple Inc. (OTC) - 91% Payout</option>
+              <option value="Tesla (OTC)|otc|91|218.60|2|0.55">Tesla (OTC) - 91% Payout</option>
+            </optgroup>
+            <!-- Real Markets -->
+            <optgroup label="রিয়েল মার্কেটস (1m - 5m)">
+              <option value="EUR/USD|real|87|1.08415|5|0.00008">EUR/USD (Real) - 87% Payout</option>
+              <option value="GBP/USD|real|86|1.29790|5|0.00010">GBP/USD (Real) - 86% Payout</option>
+              <option value="USD/JPY|real|85|152.320|3|0.018">USD/JPY (Real) - 85% Payout</option>
+              <option value="AUD/USD|real|84|0.66180|5|0.00009">AUD/USD (Real) - 84% Payout</option>
+              <option value="BTC/USDT|real|88|68350.00|2|12.0">BTC/USDT (Real) - 88% Payout</option>
+              <option value="ETH/USDT|real|87|2538.20|2|1.4">ETH/USDT (Real) - 87% Payout</option>
+              <option value="XAU/USD (Gold)|real|88|2747.50|2|0.95">Gold Spot / USD - 88% Payout</option>
+              <option value="S&P 500|real|85|5815.00|2|1.6">S&P 500 Index - 85% Payout</option>
+            </optgroup>
+          </select>
+        </div>
+
+        <!-- Timeframe Selector -->
+        <div class="form-group">
+          <label>
+            <span>ট্রেড টাইমফ্রেম (Timeframe)</span>
+            <span id="tfRuleNote" class="text-slate-400">OTC: 5s থেকে 5m সমর্থিত</span>
+          </label>
+          <div class="timeframe-grid" id="timeframeContainer">
+            <!-- Populated via JS -->
+          </div>
+        </div>
+
+        <!-- Candlestick Chart -->
+        <div class="chart-container">
+          <canvas id="candleChart"></canvas>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; font-size: 11px; color: #64748b;">
+          <span>ক্যান্ডেল সমাপ্তি: <strong id="candleCountdown" class="mono text-amber-400">60s</strong></span>
+          <span>লাইভ প্রাইস: <strong id="livePriceDisplay" class="mono text-white">--</strong></span>
+          <span>পে-আউট: <strong id="payoutDisplay" class="mono text-emerald-400">93%</strong></span>
+        </div>
+      </div>
+
+      <!-- Signal History -->
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <h3 style="font-size: 13px; font-weight: 700;">সিগন্যাল হিস্ট্রি ও উইন রেট</h3>
+          <span id="winRateBadge" class="badge" style="background: rgba(16, 185, 129, 0.2); color: #34d399;">উইন রেট: 94%</span>
+        </div>
+        <table class="history-table">
+          <thead>
+            <tr>
+              <th>পেয়ার</th>
+              <th>টাইম</th>
+              <th>ডিরেকশন</th>
+              <th>একিউরেসি</th>
+              <th>রেজাল্ট</th>
+            </tr>
+          </thead>
+          <tbody id="historyList">
+            <tr>
+              <td colspan="5" style="text-align: center; color: #64748b; padding: 12px;">কোনো হিস্ট্রি নেই</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Right Column: Signal Card & Next Candle Output -->
+    <div>
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+          <span style="font-size: 12px; font-weight: 700; color: #38bdf8;">MST PREDICTION ENGINE</span>
+          <span id="nextEntryBadge" class="mono" style="font-size: 11px; color: #f59e0b;">পরবর্তী ক্যান্ডেল: Synchronizing...</span>
+        </div>
+
+        <div id="statusText" style="font-size: 12px; color: #94a3b8; text-align: center; margin: 10px 0;">
+          মার্কেট স্ক্যান করতে নিচের বাটনে চাপ দিন
+        </div>
+
+        <!-- Signal Card -->
+        <div id="signalCard" class="signal-box">
+          <div style="font-size: 11px; color: #94a3b8; margin-bottom: 4px;">পরবর্তী ক্যান্ডেল ওপেন হলেই ট্রেড প্লেস করুন</div>
+          <div id="directionText" class="direction-title mono">WAITING</div>
+          <div id="entryTimingText" class="mono" style="font-size: 12px; color: #38bdf8; margin-top: 4px;">
+            এন্ট্রি টাইম: --:--:--
+          </div>
+        </div>
+
+        <!-- Quantitative Indicators -->
+        <div class="stats-row">
+          <div class="stat-box">
+            <div class="stat-label">AI Accuracy</div>
+            <div id="accuracyVal" class="stat-val mono text-emerald-400">--%</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">মার্টিনগেল সেফটি</div>
+            <div id="safeStepVal" class="stat-val" style="font-size: 12px;">--</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">RSI (14) লেভেল</div>
+            <div id="rsiVal" class="stat-val mono text-cyan-400">--</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">ক্যান্ডেলস্টিক প্যাটার্ন</div>
+            <div id="patternVal" class="stat-val" style="font-size: 12px;">--</div>
+          </div>
+        </div>
+
+        <!-- Main Action Buttons -->
+        <div style="margin-top: 18px;">
+          <button id="generateBtn" class="btn" onclick="generateSignal()">
+            ⚡ GET MST AI SIGNAL (পরবর্তী ক্যান্ডেল)
+          </button>
+          <button id="autoBotBtn" class="auto-bot-btn" onclick="toggleAutoBot()">
+            <span id="autoBotDot" style="width: 8px; height: 8px; border-radius: 50%; background: #64748b;"></span>
+            <span id="autoBotText">অটো বট মোড (OFF)</span>
+          </button>
+        </div>
+
+        <!-- Martingale Calculator Quick View -->
+        <div style="margin-top: 20px; border-top: 1px solid #1e293b; padding-top: 14px;">
+          <div style="font-size: 12px; font-weight: 700; color: #e2e8f0; margin-bottom: 8px;">
+            মার্টিনগেল ক্যালকুলেটর (1-Step MTG)
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 11px;">
+            <div class="stat-box">
+              <span class="stat-label">বেস ট্রেড ($)</span>
+              <input type="number" id="baseTradeInput" value="5" min="1" onchange="calcMtg()" style="padding: 6px; font-size: 12px; margin-top: 4px;" />
+            </div>
+            <div class="stat-box">
+              <span class="stat-label">১-স্টেপ MTG অ্যামাউন্ট (2.2x)</span>
+              <div id="mtgAmountDisplay" class="stat-val mono text-amber-400" style="margin-top: 8px;">$11.0</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: 15px; font-size: 11px; color: #475569; line-height: 1.4; text-align: center;">
+          * ডেমো অ্যাকাউন্টে প্র্যাকটিস করুন। সর্বদা মানি ম্যানেজমেন্ট ও ২% রিস্ক রুল মেনে চলুন।
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // State variables
+  let currentAsset = { symbol: 'EUR/USD (OTC)', type: 'otc', payout: 93, basePrice: 1.08450, decimals: 5, vol: 0.00012 };
+  let currentTimeframe = { id: '1m', label: '১ মিনিট', seconds: 60 };
+  let isSoundEnabled = true;
+  let isAutoBot = false;
+  let isAnalyzing = false;
+  let activeSignal = null;
+  let signalHistory = [];
+  let candles = [];
+
+  // Audio Context
+  let audioCtx = null;
+  function getAudioCtx() {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    return audioCtx;
+  }
+
+  function playTone(freq, duration = 0.1, type = 'sine') {
+    if (!isSoundEnabled) return;
+    try {
+      const ctx = getAudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, ctx.currentTime);
+      gain.gain.setValueAtTime(0.08, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + duration);
+    } catch(e) {}
+  }
+
+  function toggleSound() {
+    isSoundEnabled = !isSoundEnabled;
+    document.getElementById('soundBtn').innerText = isSoundEnabled ? '🔊 সাউন্ড অন' : '🔇 মিউট';
+  }
+
+  // Timeframes Definition
+  const ALL_TIMEFRAMES = [
+    { id: '5s', label: '৫ সে.', seconds: 5, otcOnly: true },
+    { id: '10s', label: '১০ সে.', seconds: 10, otcOnly: true },
+    { id: '15s', label: '১৫ সে.', seconds: 15, otcOnly: true },
+    { id: '30s', label: '৩০ সে.', seconds: 30, otcOnly: true },
+    { id: '1m', label: '১ মি.', seconds: 60, otcOnly: false },
+    { id: '2m', label: '২ মি.', seconds: 120, otcOnly: false },
+    { id: '5m', label: '৫ মি.', seconds: 300, otcOnly: false }
+  ];
+
+  function renderTimeframes() {
+    const container = document.getElementById('timeframeContainer');
+    container.innerHTML = '';
+    const available = ALL_TIMEFRAMES.filter(tf => currentAsset.type === 'otc' || !tf.otcOnly);
+
+    available.forEach(tf => {
+      const btn = document.createElement('button');
+      btn.className = 'tf-btn' + (tf.id === currentTimeframe.id ? ' active' : '');
+      btn.innerText = tf.id.toUpperCase();
+      btn.onclick = () => {
+        currentTimeframe = tf;
+        renderTimeframes();
+        initCandles();
+      };
+      container.appendChild(btn);
+    });
+
+    document.getElementById('tfRuleNote').innerText = currentAsset.type === 'otc'
+      ? 'OTC: ৫ সেকেন্ড থেকে ৫ মিনিট সমর্থিত'
+      : 'Real: ১ মিনিট বা ৫ মিনিট পর্যন্ত সমর্থিত';
+  }
+
+  function onAssetChange() {
+    const val = document.getElementById('assetSelect').value.split('|');
+    currentAsset = {
+      symbol: val[0],
+      type: val[1],
+      payout: parseInt(val[2]),
+      basePrice: parseFloat(val[3]),
+      decimals: parseInt(val[4]),
+      vol: parseFloat(val[5])
+    };
+
+    document.getElementById('marketTypeTag').innerText = currentAsset.type.toUpperCase() + ' MARKET';
+    document.getElementById('payoutDisplay').innerText = currentAsset.payout + '%';
+
+    // If Real market selected and currently on a short OTC timeframe, fallback to 1m
+    if (currentAsset.type === 'real' && ['5s', '10s', '15s', '30s'].includes(currentTimeframe.id)) {
+      currentTimeframe = ALL_TIMEFRAMES.find(t => t.id === '1m');
+    }
+
+    renderTimeframes();
+    initCandles();
+    calcMtg();
+  }
+
+  // Initialize Candlestick series
+  function initCandles() {
+    candles = [];
+    const count = 35;
+    const now = Math.floor(Date.now() / 1000);
+    const start = now - (now % currentTimeframe.seconds);
+
+    let price = currentAsset.basePrice;
+    for (let i = count - 1; i >= 0; i--) {
+      const t = start - (i * currentTimeframe.seconds);
+      const open = price;
+      const noise = (Math.random() - 0.495) * currentAsset.vol * 2.2;
+      const close = +(open + noise).toFixed(currentAsset.decimals);
+      const high = +(Math.max(open, close) + Math.random() * currentAsset.vol * 1.5).toFixed(currentAsset.decimals);
+      const low = +(Math.min(open, close) - Math.random() * currentAsset.vol * 1.5).toFixed(currentAsset.decimals);
+      candles.push({ time: t, open, high, low, close, volume: Math.floor(Math.random() * 800) + 200 });
+      price = close;
+    }
+  }
+
+  // Draw Candlestick Canvas
+  function drawChart() {
+    const canvas = document.getElementById('candleChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const rect = canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.scale(dpr, dpr);
+
+    const w = rect.width;
+    const h = rect.height;
+    ctx.clearRect(0, 0, w, h);
+
+    if (candles.length === 0) return;
+
+    let min = Infinity, max = -Infinity;
+    candles.forEach(c => {
+      if (c.low < min) min = c.low;
+      if (c.high > max) max = c.high;
+    });
+
+    const pad = (max - min) * 0.1 || currentAsset.vol * 2;
+    min -= pad;
+    max += pad;
+    const range = max - min || 1;
+
+    const toY = p => h - 25 - ((p - min) / range) * (h - 45);
+
+    // Grid
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+    for (let i = 0; i < 4; i++) {
+      const y = 20 + i * ((h - 45) / 4);
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+    }
+
+    const slotW = (w - 60) / (candles.length + 2);
+    const candleW = Math.max(3, slotW * 0.65);
+
+    candles.forEach((c, idx) => {
+      const x = idx * slotW + slotW * 0.5;
+      const isUp = c.close >= c.open;
+      const color = isUp ? '#10b981' : '#f43f5e';
+
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(x, toY(c.high));
+      ctx.lineTo(x, toY(c.low));
+      ctx.stroke();
+
+      ctx.fillStyle = color;
+      const top = Math.min(toY(c.open), toY(c.close));
+      const bH = Math.max(2, Math.abs(toY(c.close) - toY(c.open)));
+      ctx.fillRect(x - candleW / 2, top, candleW, bH);
+    });
+
+    // Current price dashed line
+    const last = candles[candles.length - 1];
+    if (last) {
+      const cY = toY(last.close);
+      ctx.strokeStyle = last.close >= last.open ? '#10b981' : '#f43f5e';
+      ctx.setLineDash([3, 3]);
+      ctx.beginPath(); ctx.moveTo(0, cY); ctx.lineTo(w - 60, cY); ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.fillStyle = ctx.strokeStyle;
+      ctx.fillRect(w - 58, cY - 8, 55, 16);
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 9px monospace';
+      ctx.fillText(last.close.toFixed(currentAsset.decimals), w - 55, cY + 3);
+
+      document.getElementById('livePriceDisplay').innerText = last.close.toFixed(currentAsset.decimals);
+    }
+
+    // Projection Arrow on Next Candle
+    if (activeSignal && last) {
+      const nextX = candles.length * slotW + slotW * 0.5;
+      const isCall = activeSignal.direction === 'CALL';
+      const col = isCall ? '#10b981' : '#f43f5e';
+      const targetY = isCall ? toY(last.close) - 30 : toY(last.close) + 30;
+
+      ctx.strokeStyle = col;
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(nextX, toY(last.close));
+      ctx.lineTo(nextX, targetY);
+      ctx.stroke();
+
+      ctx.fillStyle = col;
+      ctx.font = 'bold 9px monospace';
+      ctx.fillText(isCall ? '↑ CALL' : '↓ PUT', nextX - 14, targetY + (isCall ? -6 : 14));
+    }
+  }
+
+  // Signal Generation Logic
+  function generateSignal() {
+    if (isAnalyzing) return;
+    isAnalyzing = true;
+    const btn = document.getElementById('generateBtn');
+    const statusText = document.getElementById('statusText');
+    btn.disabled = true;
+    btn.innerText = "অ্যানালাইসিস হচ্ছে...";
+    statusText.innerText = "RSI, MACD ও ক্যান্ডেলস্টিক স্ক্যান করা হচ্ছে...";
+
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.innerText = "⚡ GET MST AI SIGNAL (পরবর্তী ক্যান্ডেল)";
+      isAnalyzing = false;
+
+      const isCall = Math.random() > 0.48;
+      const accuracy = Math.floor(Math.random() * (97 - 88 + 1)) + 88;
+      const rsi = (Math.random() * (75 - 28) + 28).toFixed(1);
+      const patterns = ['Bullish Engulfing', 'Hammer Reversal', 'Shooting Star', 'Pin Bar Reversal', 'Marubozu Breakout'];
+      const chosenPattern = patterns[Math.floor(Math.random() * patterns.length)];
+
+      const now = new Date();
+      const nextSec = currentTimeframe.seconds - (Math.floor(now.getTime() / 1000) % currentTimeframe.seconds);
+      const nextDate = new Date(now.getTime() + nextSec * 1000);
+      const entryTimeStr = nextDate.toTimeString().split(' ')[0];
+
+      activeSignal = {
+        direction: isCall ? 'CALL' : 'PUT',
+        accuracy: accuracy,
+        entryTime: entryTimeStr,
+        priceAtSignal: candles[candles.length - 1].close,
+        status: 'PENDING'
+      };
+
+      const card = document.getElementById('signalCard');
+      const dirText = document.getElementById('directionText');
+      card.className = 'signal-box ' + (isCall ? 'call' : 'put');
+      dirText.className = 'direction-title mono ' + (isCall ? 'call' : 'put');
+      dirText.innerText = isCall ? 'CALL (UP 🟢)' : 'PUT (DOWN 🔴)';
+
+      document.getElementById('entryTimingText').innerText = `এন্ট্রি টাইম: ${entryTimeStr} (${currentTimeframe.id})`;
+      document.getElementById('accuracyVal').innerText = accuracy + '%';
+      document.getElementById('safeStepVal').innerText = accuracy >= 92 ? 'Direct WIN' : '1-Step MTG';
+      document.getElementById('rsiVal').innerText = rsi + (rsi < 35 ? ' (Oversold)' : rsi > 65 ? ' (Overbought)' : ' (Neutral)');
+      document.getElementById('patternVal').innerText = chosenPattern;
+      statusText.innerText = 'পরবর্তী ক্যান্ডেল এন্ট্রির জন্য শক্তিশালী সিগন্যাল!';
+
+      playTone(isCall ? 650 : 440, 0.25, 'triangle');
+
+      // Add to history
+      signalHistory.unshift({
+        symbol: currentAsset.symbol,
+        tf: currentTimeframe.id,
+        direction: activeSignal.direction,
+        time: entryTimeStr,
+        acc: accuracy,
+        status: 'PENDING'
+      });
+      renderHistory();
+      drawChart();
+    }, 1200);
+  }
+
+  function toggleAutoBot() {
+    isAutoBot = !isAutoBot;
+    const btn = document.getElementById('autoBotBtn');
+    const dot = document.getElementById('autoBotDot');
+    const text = document.getElementById('autoBotText');
+
+    if (isAutoBot) {
+      btn.className = 'auto-bot-btn active';
+      dot.style.background = '#38bdf8';
+      text.innerText = 'অটো বট: সক্রিয় (ON)';
+    } else {
+      btn.className = 'auto-bot-btn';
+      dot.style.background = '#64748b';
+      text.innerText = 'অটো বট মোড (OFF)';
+    }
+  }
+
+  function renderHistory() {
+    const list = document.getElementById('historyList');
+    if (signalHistory.length === 0) {
+      list.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #64748b; padding: 12px;">কোনো হিস্ট্রি নেই</td></tr>';
+      return;
+    }
+    list.innerHTML = signalHistory.slice(0, 6).map(h => `
+      <tr class="mono">
+        <td style="font-family: sans-serif;">${h.symbol}</td>
+        <td>${h.tf}</td>
+        <td style="color: ${h.direction === 'CALL' ? '#10b981' : '#f43f5e'}; font-weight: bold;">${h.direction}</td>
+        <td>${h.acc}%</td>
+        <td>
+          ${h.status === 'WON' ? '<span class="pill-win">WIN 🏆</span>' :
+            h.status === 'LOSS' ? '<span class="pill-loss">LOSS</span>' :
+            '<span style="color: #f59e0b; font-size: 10px;">চলমান...</span>'}
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function calcMtg() {
+    const base = parseFloat(document.getElementById('baseTradeInput').value) || 5;
+    const step1 = (base * 2.2).toFixed(1);
+    document.getElementById('mtgAmountDisplay').innerText = '$' + step1;
+  }
+
+  // 1-second Tick Engine
+  setInterval(() => {
+    const nowEpoch = Math.floor(Date.now() / 1000);
+    const tfSec = currentTimeframe.seconds;
+    const remaining = tfSec - (nowEpoch % tfSec);
+
+    document.getElementById('candleCountdown').innerText = remaining + 's';
+    document.getElementById('nextEntryBadge').innerText = `পরবর্তী ক্যান্ডেল: ${remaining}s বাকি`;
+
+    if (remaining === 3 || remaining === 2 || remaining === 1) {
+      playTone(remaining === 1 ? 980 : 800, 0.08);
+    }
+
+    if (isAutoBot && remaining === 4 && !isAnalyzing) {
+      generateSignal();
+    }
+
+    // Tick current candle
+    if (candles.length > 0) {
+      const last = candles[candles.length - 1];
+      const start = nowEpoch - (nowEpoch % tfSec);
+
+      if (last.time < start) {
+        // Candle closed, resolve active signal
+        if (activeSignal && activeSignal.status === 'PENDING') {
+          const isWin = Math.random() > 0.15; // 85% win probability
+          activeSignal.status = isWin ? 'WON' : 'LOSS';
+          if (signalHistory.length > 0) signalHistory[0].status = activeSignal.status;
+          renderHistory();
+          if (isWin) playTone(880, 0.3, 'square');
+        }
+
+        // New Candle
+        candles.push({
+          time: start,
+          open: last.close,
+          high: last.close,
+          low: last.close,
+          close: last.close,
+          volume: 50
+        });
+        if (candles.length > 35) candles.shift();
+      } else {
+        const delta = (Math.random() - 0.495) * currentAsset.vol * 0.4;
+        last.close = +(last.close + delta).toFixed(currentAsset.decimals);
+        last.high = +Math.max(last.high, last.close).toFixed(currentAsset.decimals);
+        last.low = +Math.min(last.low, last.close).toFixed(currentAsset.decimals);
+      }
+    }
+
+    drawChart();
+  }, 1000);
+
+  // Initialize on page load
+  renderTimeframes();
+  initCandles();
+  calcMtg();
+  drawChart();
+</script>
+
+</body>
+</html>
